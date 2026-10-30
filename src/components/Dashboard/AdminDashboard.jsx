@@ -47,10 +47,10 @@ import Header from '../other/Header'
 import CreateTask from '../other/CreateTask'
 import AllTask from '../other/AllTask'
 
-const AdminDashboard = ({ changeUser, data }) => {
+const AdminDashboard = ({ onLogout, data }) => {
   return (
     <div className='min-h-screen w-full p-7 bg-[#111] text-white'>
-      <Header changeUser={changeUser} data={data} />
+      <Header onLogout={onLogout} data={data} />
       <CreateTask />
       <AllTask />
     </div>

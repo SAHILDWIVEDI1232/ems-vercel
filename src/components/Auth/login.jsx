@@ -1,17 +1,24 @@
 import React, { useState } from 'react'
 
 const Login = ({ handleLogin, handleCreateAccount }) => {
-  const [isCreatingAccount, setIsCreatingAccount] = useState(false)
+  const [accountType, setAccountType] = useState(null)
   const [firstName, setFirstName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [message, setMessage] = useState('')
 
+  const isCreatingAccount = accountType !== null
+
   const submitHandler = (event) => {
     event.preventDefault()
 
     if (isCreatingAccount) {
-      const result = handleCreateAccount(firstName, email, password)
+      const result = handleCreateAccount(
+        accountType,
+        firstName,
+        email,
+        password
+      )
 
       if (result) {
         setMessage(result)
@@ -28,8 +35,14 @@ const Login = ({ handleLogin, handleCreateAccount }) => {
     setMessage('')
   }
 
-  const switchForm = () => {
-    setIsCreatingAccount(!isCreatingAccount)
+  const selectAccountType = (type) => {
+    setAccountType(type)
+    setMessage('')
+  }
+
+  const backToLogin = () => {
+    setAccountType(null)
+    setFirstName('')
     setMessage('')
   }
 
@@ -84,15 +97,36 @@ const Login = ({ handleLogin, handleCreateAccount }) => {
               {isCreatingAccount ? 'Create Account' : 'Login'}
             </button>
 
-            <button
-              type='button'
-              onClick={switchForm}
-              className='w-full rounded-full border border-emerald-600 px-6 py-3 text-lg font-semibold text-emerald-400 hover:bg-emerald-600 hover:text-white'
-            >
-              {isCreatingAccount ? 'Back to Login' : 'Create Account'}
-            </button>
+            {isCreatingAccount && (
+              <button
+                type='button'
+                onClick={backToLogin}
+                className='w-full rounded-full border border-emerald-600 px-6 py-3 text-lg font-semibold text-emerald-400 hover:bg-emerald-600 hover:text-white'
+              >
+                Back to Login
+              </button>
+            )}
           </div>
         </form>
+
+        {!isCreatingAccount && (
+          <div className='mt-4 flex w-full flex-col gap-3 sm:flex-row'>
+            <button
+              type='button'
+              onClick={() => selectAccountType('admin')}
+              className='w-full rounded-full border border-emerald-600 px-4 py-3 text-base font-semibold text-emerald-400 hover:bg-emerald-600 hover:text-white'
+            >
+              Create Admin Account
+            </button>
+            <button
+              type='button'
+              onClick={() => selectAccountType('employee')}
+              className='w-full rounded-full border border-emerald-600 px-4 py-3 text-base font-semibold text-emerald-400 hover:bg-emerald-600 hover:text-white'
+            >
+              Create Employee Account
+            </button>
+          </div>
+        )}
 
         {message && (
           <p className='mt-4 text-center text-sm text-red-300' role='alert'>

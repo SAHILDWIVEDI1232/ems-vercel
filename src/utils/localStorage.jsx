@@ -547,11 +547,34 @@ export const setLocalStorage = () => {
 // localStorage se data lena
 export const getLocalStorage = () => {
 
-  const employees =
+  let employees =
     JSON.parse(localStorage.getItem("employees")) || []
 
-  const admin =
+  let admin =
     JSON.parse(localStorage.getItem("admin")) || []
+
+  const legacyAdmins = employees.filter(
+    (account) => account.role === "admin"
+  )
+
+  if (legacyAdmins.length > 0) {
+    const adminEmails = new Set(
+      admin.map((account) => account.email.toLowerCase())
+    )
+
+    admin = [
+      ...admin,
+      ...legacyAdmins.filter(
+        (account) => !adminEmails.has(account.email.toLowerCase())
+      )
+    ]
+    employees = employees.filter(
+      (account) => account.role !== "admin"
+    )
+
+    localStorage.setItem("admin", JSON.stringify(admin))
+    localStorage.setItem("employees", JSON.stringify(employees))
+  }
 
   return {
     employees,
@@ -566,5 +589,12 @@ export const updateLocalStorage = (employees) => {
   localStorage.setItem(
     "employees",
     JSON.stringify(employees)
+  )
+}
+
+export const updateAdminStorage = (admins) => {
+  localStorage.setItem(
+    "admin",
+    JSON.stringify(admins)
   )
 }

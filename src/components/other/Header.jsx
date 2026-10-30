@@ -33,12 +33,7 @@
 
 import React from 'react'
 
-const Header = (props) => {
-
-  const logOutUser = () => {
-    localStorage.removeItem("loggedInUser")
-    props.changeUser(null)
-  }
+const Header = ({ data, onLogout }) => {
 
   return (
     <div className="flex items-end justify-between">
@@ -48,13 +43,13 @@ const Header = (props) => {
         <br />
 
         <span className='text-3xl text-white font-semibold'>
-          {props.data?.firstName || "Admin"} 🙌
+          {data?.firstName || "Admin"} 🙌
         </span>
 
       </h1>
 
       <button
-        onClick={logOutUser}
+        onClick={onLogout}
         className='bg-red-600 text-lg font-medium text-white py-3 px-5 rounded-sm'
       >
         Log out

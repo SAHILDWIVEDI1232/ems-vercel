@@ -25,7 +25,7 @@ import TaskList from '../TaskList/TaskList'
 
 import { AuthContext } from '../../context/AuthProvider'
 
-const EmployeeDashboard = ({ changeUser, data }) => {
+const EmployeeDashboard = ({ onLogout, data }) => {
 
   const [userData] = useContext(AuthContext)
 
@@ -36,7 +36,7 @@ const EmployeeDashboard = ({ changeUser, data }) => {
     <div className='p-20 bg-[#1c1c1c] text-white h-screen'>
 
       <Header
-        changeUser={changeUser}
+        onLogout={onLogout}
         data={currentUser}
       />
 

@@ -89,7 +89,11 @@ import EmployeeDashboard from './components/Dashboard/EmployeeDashboard'
 import AdminDashboard from './components/Dashboard/AdminDashboard'
 
 import { AuthContext } from './context/AuthProvider'
-import { updateLocalStorage } from './utils/localStorage'
+import {
+  getLocalStorage,
+  updateAdminStorage,
+  updateLocalStorage
+} from './utils/localStorage'
 
 const App = () => {
 
@@ -116,19 +120,24 @@ const App = () => {
   }, [])
 
   const handleLogin = (email, password) => {
+    const normalizedEmail = email.trim().toLowerCase()
+    const { admin: admins } = getLocalStorage()
 
-    // ADMIN LOGIN
-    if (
-      email === "admin@me.com" &&
-      password === "123"
-    ) {
+    const admin = admins.find(
+      (account) =>
+        account.email.toLowerCase() === normalizedEmail &&
+        account.password === password
+    )
 
+    if (admin) {
       setUser("admin")
+      setLoggedInUserData(admin)
 
       localStorage.setItem(
         "loggedInUser",
         JSON.stringify({
-          role: "admin"
+          role: "admin",
+          data: admin
         })
       )
 
@@ -140,20 +149,18 @@ const App = () => {
 
       const employee = userData.find(
         (employee) =>
-          employee.email === email &&
+          employee.email.toLowerCase() === normalizedEmail &&
           employee.password === password
       )
 
       if (employee) {
-        const role = employee.role || "employee"
-
-        setUser(role)
+        setUser("employee")
         setLoggedInUserData(employee)
 
         localStorage.setItem(
           "loggedInUser",
           JSON.stringify({
-            role,
+            role: "employee",
             data: employee
           })
         )
@@ -165,55 +172,69 @@ const App = () => {
     alert("Invalid Credentials")
   }
 
-  const handleCreateAccount = (firstName, email, password) => {
-    if (!userData) {
+  const handleCreateAccount = (role, firstName, email, password) => {
+    if (!userData || !role) {
       return 'Account data is still loading. Please try again.'
     }
 
     const normalizedEmail = email.trim().toLowerCase()
-
-    if (normalizedEmail === 'admin@me.com') {
-      return 'This email is reserved for the admin account.'
-    }
+    const { admin: admins } = getLocalStorage()
 
     if (
       userData.some(
         (employee) => employee.email.toLowerCase() === normalizedEmail
+      ) ||
+      admins.some(
+        (admin) => admin.email.toLowerCase() === normalizedEmail
       )
     ) {
       return 'An account with this email already exists.'
     }
 
-    const newEmployee = {
-      id: Math.max(0, ...userData.map((employee) => employee.id)) + 1,
+    const newAccount = {
+      id: Date.now(),
       firstName: firstName.trim(),
       email: normalizedEmail,
-      password,
-      role: "admin",
-      taskCounts: {
-        active: 0,
-        newTask: 0,
-        completed: 0,
-        failed: 0
-      },
-      tasks: []
+      password
     }
 
-    const updatedUserData = [...userData, newEmployee]
+    if (role === 'admin') {
+      updateAdminStorage([...admins, newAccount])
+    } else {
+      const newEmployee = {
+        ...newAccount,
+        taskCounts: {
+          active: 0,
+          newTask: 0,
+          completed: 0,
+          failed: 0
+        },
+        tasks: []
+      }
 
-    setUserData(updatedUserData)
-    updateLocalStorage(updatedUserData)
-    setLoggedInUserData(newEmployee)
-    setUser('admin')
+      const updatedUserData = [...userData, newEmployee]
+      setUserData(updatedUserData)
+      updateLocalStorage(updatedUserData)
+      setLoggedInUserData(newEmployee)
+    }
+
+    setUser(role)
     localStorage.setItem(
       'loggedInUser',
       JSON.stringify({
-        role: 'admin',
-        data: newEmployee
+        role,
+        data: newAccount
       })
     )
 
     return null
+  }
+
+  const handleLogout = () => {
+    localStorage.removeItem('loggedInUser')
+    setUser(null)
+    setLoggedInUserData(null)
+    window.history.replaceState({}, '', '/')
   }
 
   return (
@@ -226,12 +247,12 @@ const App = () => {
       )}
 
       {user === "admin" && (
-        <AdminDashboard changeUser={setUser} data={loggedInUserData} />
+        <AdminDashboard onLogout={handleLogout} data={loggedInUserData} />
       )}
 
       {user === "employee" && loggedInUserData && (
         <EmployeeDashboard
-          changeUser={setUser}
+          onLogout={handleLogout}
           data={loggedInUserData}
         />
       )}
