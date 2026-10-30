@@ -89,13 +89,14 @@ import EmployeeDashboard from './components/Dashboard/EmployeeDashboard'
 import AdminDashboard from './components/Dashboard/AdminDashboard'
 
 import { AuthContext } from './context/AuthProvider'
+import { updateLocalStorage } from './utils/localStorage'
 
 const App = () => {
 
   const [user, setUser] = useState(null)
   const [loggedInUserData, setLoggedInUserData] = useState(null)
 
-  const [userData] = useContext(AuthContext)
+  const [userData, setUserData] = useContext(AuthContext)
 
   useEffect(() => {
 
@@ -107,7 +108,7 @@ const App = () => {
 
       setUser(data.role)
 
-      if (data.role === "employee") {
+      if (data.data) {
         setLoggedInUserData(data.data)
       }
     }
@@ -144,14 +145,15 @@ const App = () => {
       )
 
       if (employee) {
+        const role = employee.role || "employee"
 
-        setUser("employee")
+        setUser(role)
         setLoggedInUserData(employee)
 
         localStorage.setItem(
           "loggedInUser",
           JSON.stringify({
-            role: "employee",
+            role,
             data: employee
           })
         )
@@ -163,14 +165,68 @@ const App = () => {
     alert("Invalid Credentials")
   }
 
+  const handleCreateAccount = (firstName, email, password) => {
+    if (!userData) {
+      return 'Account data is still loading. Please try again.'
+    }
+
+    const normalizedEmail = email.trim().toLowerCase()
+
+    if (normalizedEmail === 'admin@me.com') {
+      return 'This email is reserved for the admin account.'
+    }
+
+    if (
+      userData.some(
+        (employee) => employee.email.toLowerCase() === normalizedEmail
+      )
+    ) {
+      return 'An account with this email already exists.'
+    }
+
+    const newEmployee = {
+      id: Math.max(0, ...userData.map((employee) => employee.id)) + 1,
+      firstName: firstName.trim(),
+      email: normalizedEmail,
+      password,
+      role: "admin",
+      taskCounts: {
+        active: 0,
+        newTask: 0,
+        completed: 0,
+        failed: 0
+      },
+      tasks: []
+    }
+
+    const updatedUserData = [...userData, newEmployee]
+
+    setUserData(updatedUserData)
+    updateLocalStorage(updatedUserData)
+    setLoggedInUserData(newEmployee)
+    setUser('admin')
+    localStorage.setItem(
+      'loggedInUser',
+      JSON.stringify({
+        role: 'admin',
+        data: newEmployee
+      })
+    )
+
+    return null
+  }
+
   return (
     <>
       {!user && (
-        <Login handleLogin={handleLogin} />
+        <Login
+          handleLogin={handleLogin}
+          handleCreateAccount={handleCreateAccount}
+        />
       )}
 
       {user === "admin" && (
-        <AdminDashboard changeUser={setUser} />
+        <AdminDashboard changeUser={setUser} data={loggedInUserData} />
       )}
 
       {user === "employee" && loggedInUserData && (
